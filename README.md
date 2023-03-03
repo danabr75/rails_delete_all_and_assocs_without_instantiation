@@ -36,3 +36,22 @@ class User < ApplicationRecord
   has_many :creator_accounts, -> (user_id) { where(creator_id: user_id) }, dependent: :destroy
 end
 ```
+
+# Customization
+```
+class User
+  # This is a way you can do more advanced filtering on association dependencies, and not just wipe everything
+  def self.delete_all_and_assocs_without_instantiation_builder models_and_ids_list = {}, errors = [], options = {}
+    original_account_ids = models_and_ids_list['Account']
+    models_and_ids_list, errors = super(models_and_ids_list, errors, options)
+    # we've ignored the deletion command that may or may not have been created by your assoc definition
+    models_and_ids_list['Account'] = original_account_ids
+    
+    query = self.where({}).includes(:accounts).joins(:accounts).where(accounts: {marketable: true})
+    account_ids = query.collect{|pro| pro.accounts.map(&:id) }.flatten
+    models_and_ids_list, errors = Account.unscoped.where(id: account_ids).delete_all_and_assocs_without_instantiation_builder(models_and_ids_list, errors, options)
+
+    return models_and_ids_list, errors
+  end
+end
+```
