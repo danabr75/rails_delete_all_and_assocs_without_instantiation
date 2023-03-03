@@ -41,8 +41,9 @@ end
 ```
 class User
   # This is a way you can do more advanced filtering on association dependencies, and not just wipe everything
+  # - you should try to implement the following as model association using a scope, but here's how you could handle something like that within this method.
   def self.delete_all_and_assocs_without_instantiation_builder models_and_ids_list = {}, errors = [], options = {}
-    original_account_ids = models_and_ids_list['Account']
+    original_account_ids = models_and_ids_list['Account'] || []
     models_and_ids_list, errors = super(models_and_ids_list, errors, options)
     # we've ignored the deletion command that may or may not have been created by your assoc definition
     models_and_ids_list['Account'] = original_account_ids
