@@ -1,5 +1,13 @@
 module RailsDeleteAllAndAssocsWithoutInstantiation
   module DeleteAllAndAssocsWithoutInstantiation
+    MATCH_DEPENDENT_ASSOC_VALUE = [
+      :destroy,
+      'destroy',
+      :delete_all,
+      'delete_all',
+      :destroy_async,
+      'destroy_async',
+    ]
 
     # rails interpretation is different than expected:
     # https://makandracards.com/makandra/32175-don-t-forget-automatically-remove-join-records-on-has_many-through-associations
@@ -22,7 +30,7 @@ module RailsDeleteAllAndAssocsWithoutInstantiation
       # force_through_destroy_chains = options[:force_destroy_chain] || {}
       # do_not_destroy_self = options[:do_not_destroy] || {}
 
-      current_class = self::class
+      current_class = self.name
       current_query = self
       ids = current_query.pluck(:id)
       models_and_ids_list[name] ||= []
@@ -33,14 +41,14 @@ module RailsDeleteAllAndAssocsWithoutInstantiation
         return models_and_ids_list, errors
       end
 
-      models_and_ids_list[self.name] = ids
+      models_and_ids_list[self.name] += ids
 
       # if do_not_destroy_self != true 
       #   models_and_ids_list[name] += ids
       # end
 
       # ignore associations that aren't dependent destroyable.
-      destroy_association_names = self.reflect_on_all_associations.reject{|v| ![:destroy, 'destroy'].include?(v.options&.dig(:dependent)) }.collect{ |v| v.name }
+      destroy_association_names = self.reflect_on_all_associations.reject{|v| !MATCH_DEPENDENT_ASSOC_VALUE.include?(v.options&.dig(:dependent)) }.collect{ |v| v.name }
 
 
       # associations that we might not necessarilly need to delete, but need to go through
@@ -144,6 +152,11 @@ module RailsDeleteAllAndAssocsWithoutInstantiation
 
       retry_due_to_errors = []
       retry_to_capture_errors = []
+
+      if options[:verbose]
+        puts "DELETION STRUCTURE"
+        puts built_deletions.inspect
+      end
 
       ActiveRecord::Base.transaction do
         built_deletions.keys.reverse.each do |class_name|
