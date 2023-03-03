@@ -1,2 +1,7 @@
 # require 'rails_delete_all_and_assocs_without_instantiation'
-require_relative '../app/models/application_record'
+require 'rails'
+require_relative 'rails_delete_all_and_assocs_without_instantiation/delete_all_and_assocs_extension'
+
+ActiveRecord::Base.extend(
+  RailsDeleteAllAndAssocsWithoutInstantiation::DeleteAllAndAssocsWithoutInstantiation
+)

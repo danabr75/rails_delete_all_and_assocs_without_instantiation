@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{rails_delete_all_and_assocs_without_instantiation}
-  s.version = "0.0.0"
+  s.version = "0.0.1"
   s.date = %q{2023-03-02}
   s.authors = ["benjamin.dana.software.dev@gmail.com"]
   s.summary = %q{Non-instantiated way of deleting records with dependencies quickly without instantiation.}
