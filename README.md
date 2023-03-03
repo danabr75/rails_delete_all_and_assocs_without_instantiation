@@ -5,10 +5,9 @@ A recursive, class-based implementation of active_records' delete_all command, b
 gem 'rails_delete_all_and_assocs_without_instantiation'
 
 # Ex usage:
-
+  ```
   # Delete all queried users and their dependecies.
   # - if any errors are encountered, the transactions are rolled back
-  ```
   # no errors detected
   User.where(email: deletable_email_list).delete_all_and_assocs_without_instantiation# => true, hash_of_classes_and_ids
   # errors detected, and returned
@@ -16,9 +15,8 @@ gem 'rails_delete_all_and_assocs_without_instantiation'
   # alias
   User.where(email: deletable_email_list).delete_all_and_assocs_w_i
   ```
-
-  # Push past any errors to delete as many of the objects as possible
   ```
+  # Push past any errors to delete as many of the objects as possible
   User.where(email: deletable_email_list).delete_all_and_assocs_without_instantiation!
   User.where(email: deletable_email_list).delete_all_and_assocs_w_i!
   User.where(email: deletable_email_list).delete_all_and_assocs_without_instantiation({force: true})
@@ -32,9 +30,9 @@ All association definitions on models with custom scopes must not have any param
 ## Ex
 ```
 class User < ApplicationRecord
-  # GOOD!
+  # Works!
   has_many :accounts, -> { order(:created_at) }, dependent: :destroy
-  # BAD!
+  # Will not work!
   has_many :creator_accounts, -> (user_id) { where(creator_id: user_id) }, dependent: :destroy
 end
 ```
