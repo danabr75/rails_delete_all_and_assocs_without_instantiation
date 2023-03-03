@@ -33,6 +33,8 @@ module RailsDeleteAllAndAssocsWithoutInstantiation
         return models_and_ids_list, errors
       end
 
+      models_and_ids_list[self.name] = ids
+
       # if do_not_destroy_self != true 
       #   models_and_ids_list[name] += ids
       # end
