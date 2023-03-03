@@ -37,7 +37,7 @@ module RailsDeleteAllAndAssocsWithoutInstantiation
 
       # prevent infinite recursion here.
       ids = ids - models_and_ids_list[self.name]
-      if ids.none?
+      if ids.none? || ids.nil?
         return models_and_ids_list, errors
       end
 
@@ -160,22 +160,31 @@ module RailsDeleteAllAndAssocsWithoutInstantiation
 
       ActiveRecord::Base.transaction do
         built_deletions.keys.reverse.each do |class_name|
+          ids = "N/A"
           begin
             ids = built_deletions[class_name]
-            next if ids.none?
+            next if ids.none? || ids.nil?
             klass = class_name.constantize
             klass.unscoped.where(id: ids).delete_all
           rescue Exception => e
+            puts "DEL ATTEMPT 1: #{class_name}.unscoped.where(id: #{ids}).delete_all" if options[:verbose]
             retry_due_to_errors << class_name
           end
         end
 
+        if options[:verbose]
+          puts "RETRY DUE TO ERRORS:"
+          puts retry_due_to_errors.inspect
+        end
+
         # ActiveRecord::InvalidForeignKey can cause issues in ordering.
-        retry_due_to_errors.reverse.each do |class_name|
+        retry_due_to_errors.each do |class_name|
+          ids = "N/A"
           begin
             ids = built_deletions[class_name]
-            next if ids.none?
+            next if ids.none? || ids.nil?
             klass = class_name.constantize
+            puts "DEL ATTEMPT 2: #{class_name}.unscoped.where(id: #{ids}).delete_all" if options[:verbose]
             klass.unscoped.where(id: ids).delete_all
             # if Rails.env.test? || Rails.env.development?
             #   if count = klass.unscoped.where(id: ids).count > 0
@@ -185,20 +194,27 @@ module RailsDeleteAllAndAssocsWithoutInstantiation
           rescue Exception => e
             # ActiveRecord::Base.transaction obscures the actual errors
             # - need to run again outside of block to get actual error
-            retry_to_capture_errors << [klass, ids]
+            retry_to_capture_errors << [class_name, ids]
             raise ActiveRecord::Rollback
           end
         end
       end
 
-      retry_to_capture_errors.each do |klass, ids|
+      retry_to_capture_errors.each do |class_name, ids|
+        if ids == "N/A"
+          errors << ["Internal Server Error, could not locate IDs", class_name]
+          next
+        end
         begin
+          klass = class_name.constantize
+          puts "DEL ATTEMPT 3: #{class_name}.unscoped.where(id: #{ids}).delete_all" if options[:verbose]
           klass.unscoped.where(id: ids).delete_all
           # should never get past this line, we're expecting an error!
           # - if we do, maybe was an intermittent issue. Call ourselves recursively to try again.
-          return current_query.delete_all_and_assocs_without_instantiation(options)
+          # return current_query.delete_all_and_assocs_without_instantiation(options)
+          errors << ["#{class_name} - expected error, ran into 2 errors on previous deletion attempts", ids]
         rescue Exception => e
-          errors << e.class.to_s + "; " + e.message
+          errors << [e.class.to_s + "; " + e.message, e.backtrace]
         end
 
       end
