@@ -33,7 +33,7 @@ class User < ApplicationRecord
   # Works!
   has_many :accounts, -> { order(:created_at) }, dependent: :destroy
   # Will not work!
-  has_many :creator_accounts, -> (user_id) { where(creator_id: user_id) }, dependent: :destroy
+  has_many :creator_accounts, -> (user_id) { where(creator_id: user_id) }, dependent: :destroy, class_name: "Account"
 end
 ```
 
