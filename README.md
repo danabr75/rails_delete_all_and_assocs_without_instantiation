@@ -1,3 +1,6 @@
+## Deprecated!
+This gem is no longer maintained. It's primary function has been superceded by this gem: https://github.com/danabr75/bulk_dependency_eraser
+
 # rails_delete_all_and_assocs_without_instantiation
 A recursive, class-based implementation of active_records' delete_all command, but able to also delete nested associations without record instantiation (much quicker)
 
